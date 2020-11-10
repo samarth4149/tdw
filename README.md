@@ -67,8 +67,9 @@
 | Document                                                     | Description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [Observation Data](https://github.com/threedworld-mit/tdw/blob/master/Documentation/benchmark/observation_data.md) | Different means of determining what an agent is observing.   |
-| [The Sticky Mitten Avatar](https://github.com/threedworld-mit/tdw/blob/master/Documentation/misc_frontend/sticky_mitten_avatar.md) | Comprehensive documentation for a physics-driven agent with "sticky mittens". |
 | [Avatar Movement](https://github.com/threedworld-mit/tdw/blob/master/Documentation/misc_frontend/avatar_movement.md) | Different techniques for moving agents.                      |
+| [Sticky Mitten Avatar (low-level)](https://github.com/threedworld-mit/tdw/blob/master/Documentation/misc_frontend/sticky_mitten_avatar.md) | Comprehensive documentation for a physics-driven agent with "sticky mittens". |
+| [Sticky Mitten Avatar (high-level)](https://github.com/alters-mit/sticky_mitten_avatar) | High-level API for the Sticky Mitten Avatar.                 |
 
 # Benchmarks and Speed
 
@@ -99,6 +100,9 @@
 | [NVIDIA Flex](https://github.com/threedworld-mit/tdw/blob/master/Documentation/misc_frontend/flex.md) | Add soft bodies, cloth, and fluids to TDW. |
 | [FluidTypes](https://github.com/threedworld-mit/tdw/blob/master/Documentation/python/fluid_types.md) | Access different NVIDIA Flex fluid types.  |
 | [Physics Determinism](https://github.com/threedworld-mit/tdw/blob/master/Documentation/benchmark/determinism.md) | Benchmark of PhysX physics determinism.    |
+| [tdw_physics](https://github.com/alters-mit/sticky_mitten_avatar)     | Generate a physics dataset.                |
+| [Sticky Mitten Avatar API](https://github.com/alters-mit/sticky_mitten_avatar) | High-level API for the Sticky Mitten Avatar. |
+| [Rube Goldberg (demo)](https://github.com/threedworld-mit/tdw/blob/master/Documentation/python/use_cases/rube_goldberg.md) | Demo of complex physical interactions between objects, with PyImpact generation of impact sounds, set in a photorealistic scene.    |
 
 # Releases
 
@@ -175,3 +179,4 @@
 | [tdw_sound20k](https://github.com/alters-mit/tdw_sound20k)   | Generate an audio dataset.                 |
 | [tdw_physics](https://github.com/alters-mit/tdw_physics)     | Generate a physics dataset.                |
 | [Rube Goldberg (demo)](https://github.com/threedworld-mit/tdw/blob/master/Documentation/python/use_cases/rube_goldberg.md) | Demo of complex physical interactions between objects, with PyImpact generation of impact sounds, set in a photorealistic scene.    |
+| [Sticky Mitten Avatar API](https://github.com/alters-mit/sticky_mitten_avatar) | High-level API for the Sticky Mitten Avatar. |

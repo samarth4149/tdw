@@ -2,6 +2,8 @@
 
 To benchmark how deterministic physics are in PhysX (not Flex), run the scripts in `benchmarking/variance`
 
+These tests require [`tdw_physics`](https://github.com/alters-mit/tdw_physics).
+
 ### variance.py
 
 This will test physics determinism between multiple trials. A lower value means that physics is more deterministic.
