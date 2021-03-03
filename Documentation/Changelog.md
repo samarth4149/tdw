@@ -26,6 +26,10 @@ To upgrade from TDW v1.7 to v1.8, read [this guide](Documentation/upgrade_guides
 
 - Added: mm_kitchen_1a
 
+### Build
+
+- Fixed: Various timeout issues because the build's message requesting a re-send isn't formatted correctly
+
 ## v1.8.2
 
 ### `tdw` module
