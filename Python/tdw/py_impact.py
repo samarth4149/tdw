@@ -434,18 +434,27 @@ class PyImpact:
             other_audio = self.object_info[self.object_names[other]]
 
             # TODO TESTING ONLY!
-            if target_audio.material.name == "plastic_hard":
-                target_mat = "ceramic"
+            if self.object_names[target] == "trapezoidal_table":
+                target_mat = "wood_medium_0"
+            elif self.object_names[target] == "vase_06":
+                target_mat = "ceramic_0"
             else:
-                target_mat = target_audio.material.name
+                target_mat = "TODO"
+            if self.object_names[other] == "trapezoidal_table":
+                other_mat = "wood_medium_0"
+            elif self.object_names[other] == "vase_06":
+                other_mat = "ceramic_0"
+            else:
+                other_mat = "TODO"
+
             commands.append(self.get_impact_sound_command(collision=collision,
                                                           rigidbodies=rigidbodies,
                                                           target_id=target,
                                                           target_amp=target_audio.amp,
-                                                          target_mat=target_mat + "_0",
+                                                          target_mat=target_mat,
                                                           other_id=other,
                                                           other_amp=other_audio.amp,
-                                                          other_mat=other_audio.material.name + "_0",
+                                                          other_mat=other_mat,
                                                           resonance=target_audio.resonance,
                                                           play_audio_data=not resonance_audio))
         # Play sounds from collisions with the environment.
@@ -463,21 +472,23 @@ class PyImpact:
             audio = self.object_info[self.object_names[target]]
 
             # TODO TESTING ONLY!
-            if audio.material.name == "plastic_hard":
-                target_mat = "ceramic"
+            if self.object_names[target] == "trapezoidal_table":
+                target_mat = "wood_medium_0"
+            elif self.object_names[target] == "vase_06":
+                target_mat = "ceramic_0"
             else:
-                target_mat = audio.material.name
+                target_mat = "TODO"
 
             commands.append(self.get_impact_sound_command(collision=collision,
                                                           rigidbodies=rigidbodies,
                                                           target_id=target,
                                                           target_amp=audio.amp,
-                                                          target_mat=target_mat + "_0",
+                                                          target_mat=target_mat,
                                                           other_id=self.env_id,
                                                           other_amp=0.5,
                                                           # We probably need dedicated wall and floor materials, or maybe they are in size category #6?
                                                           # Setting to "4" for now, for general debugging purposes
-                                                          other_mat=floor.name + "_0",
+                                                          other_mat="ceramic_0",
                                                           resonance=audio.resonance,
                                                           play_audio_data=not resonance_audio))
         return commands
