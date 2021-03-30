@@ -432,14 +432,20 @@ class PyImpact:
 
             target_audio = self.object_info[self.object_names[target]]
             other_audio = self.object_info[self.object_names[other]]
+
+            # TODO TESTING ONLY!
+            if target_audio.material.name == "plastic_hard":
+                target_mat = "ceramic"
+            else:
+                target_mat = target_audio.material.name
             commands.append(self.get_impact_sound_command(collision=collision,
                                                           rigidbodies=rigidbodies,
                                                           target_id=target,
                                                           target_amp=target_audio.amp,
-                                                          target_mat=target_audio.material.name + "_" + str(target_audio.size),
+                                                          target_mat=target_mat + "_0",
                                                           other_id=other,
                                                           other_amp=other_audio.amp,
-                                                          other_mat=other_audio.material.name + "_" + str(other_audio.size),
+                                                          other_mat=other_audio.material.name + "_0",
                                                           resonance=target_audio.resonance,
                                                           play_audio_data=not resonance_audio))
         # Play sounds from collisions with the environment.
@@ -455,16 +461,23 @@ class PyImpact:
                 continue
             colliders.append(target)
             audio = self.object_info[self.object_names[target]]
+
+            # TODO TESTING ONLY!
+            if audio.material.name == "plastic_hard":
+                target_mat = "ceramic"
+            else:
+                target_mat = audio.material.name
+
             commands.append(self.get_impact_sound_command(collision=collision,
                                                           rigidbodies=rigidbodies,
                                                           target_id=target,
                                                           target_amp=audio.amp,
-                                                          target_mat=audio.material.name + "_" + str(audio.size),
+                                                          target_mat=target_mat + "_0",
                                                           other_id=self.env_id,
                                                           other_amp=0.5,
                                                           # We probably need dedicated wall and floor materials, or maybe they are in size category #6?
                                                           # Setting to "4" for now, for general debugging purposes
-                                                          other_mat=floor.name + "_4",
+                                                          other_mat=floor.name + "_0",
                                                           resonance=audio.resonance,
                                                           play_audio_data=not resonance_audio))
         return commands

@@ -19,7 +19,7 @@ class ImpactSounds(Controller):
         p = PyImpact(initial_amp=0.25)
         # Set the environment audio materials.
         floor = AudioMaterial.ceramic
-        wall = AudioMaterial.wood
+        wall = AudioMaterial.wood_soft
 
         # Create an empty room.
         # Set the screen size.
