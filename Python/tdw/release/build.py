@@ -1,12 +1,13 @@
 from requests import get, head
 from typing import Tuple
+from subprocess import call
 from platform import system
 from pathlib import Path
 from zipfile import ZipFile
 from distutils import dir_util
 import tarfile
 from tdw.version import __version__
-from tdw.backend.platforms import SYSTEM_TO_RELEASE, SYSTEM_TO_EXECUTABLE
+from tdw.backend.platforms import SYSTEM_TO_RELEASE
 
 
 class Build:
@@ -15,9 +16,6 @@ class Build:
     """
 
     BUILD_ROOT_DIR = Path.home().joinpath(f"tdw_build")
-    BUILD_PATH = BUILD_ROOT_DIR.joinpath(f"TDW/TDW{SYSTEM_TO_EXECUTABLE[system()]}")
-    if system() == "Darwin":
-        BUILD_PATH = BUILD_PATH.joinpath("Contents/MacOS/TDW")
 
     @staticmethod
     def get_url(version: str = __version__) -> Tuple[str, bool]:
@@ -79,9 +77,12 @@ class Build:
 
         dst = str(Build.BUILD_ROOT_DIR.resolve())
         # Extract the zip file.
-        if platform == "Windows":
+        if platform == "Windows" or platform == "Darwin":
             with ZipFile(str(zip_path.resolve()), 'r') as zip_ref:
                 zip_ref.extractall(dst)
+            # Set executable permissions.
+            if platform == "Darwin":
+                call(["chmod", "+x", str(Build.BUILD_ROOT_DIR.joinpath(f"TDW/TDW.app/Contents/MacOS/TDW").resolve())])
         else:
             tar = tarfile.open(str(zip_path.resolve()))
             tar.extractall(dst)
