@@ -5,13 +5,14 @@ from subprocess import call
 import os
 import shutil
 from tdw.librarian import ModelRecord
-from tdw.backend import paths
 import json
 import pkg_resources
 import distutils.dir_util
 import distutils.file_util
 from tdw.backend.platforms import S3_TO_UNITY, SYSTEM_TO_UNITY, UNITY_TO_SYSTEM
 from tdw.asset_bundle_creator_base import AssetBundleCreatorBase
+from tdw.add_ons.model_verifier.model_verifier import ModelVerifier
+from tdw.controller import Controller
 
 
 class AssetBundleCreator(AssetBundleCreatorBase):
@@ -33,30 +34,31 @@ class AssetBundleCreator(AssetBundleCreatorBase):
     For more information, see: `Documentation/misc_frontend/add_local_object.md`.
     """
 
-    def __init__(self, quiet: bool = False, display: str = ":0"):
+    def __init__(self, quiet: bool = False, display: str = ":0", unity_editor_path: Union[Path, str] = None):
         """
         :param quiet: If true, don't print any messages to console.
         :param display: The display to launch Unity Editor on. Ignored if this isn't Linux.
+        :param unity_editor_path: The path to the Unity Editor executable, for example `C:/Program Files/Unity/Hub/Editor/2020.3.24f1/Editor/Unity.exe`. If None, this script will try to find Unity Editor automatically.
         """
 
-        super().__init__(quiet=quiet, display=display)
+        super().__init__(quiet=quiet, display=display, unity_editor_path=unity_editor_path)
 
         system = platform.system()
-        self.binaries: Dict[str, str] = dict()
+        self._binaries: Dict[str, str] = dict()
         binary_path = f"binaries/{system}"
 
         # Cache the binaries.
-        self.binaries["assimp"] = f"{binary_path}/assimp/assimp"
-        self.binaries["meshconv"] = f"{binary_path}/meshconv/meshconv"
-        self.binaries["vhacd"] = f"{binary_path}/vhacd/testVHACD"
+        self._binaries["assimp"] = f"{binary_path}/assimp/assimp"
+        self._binaries["meshconv"] = f"{binary_path}/meshconv/meshconv"
+        self._binaries["vhacd"] = f"{binary_path}/vhacd/testVHACD"
 
-        for binary in self.binaries:
+        for binary in self._binaries:
             # Add the .exe suffix for Windows.
             if system == "Windows":
-                self.binaries[binary] += ".exe"
+                self._binaries[binary] += ".exe"
             # Run chmod +x on everything.
             else:
-                call(["chmod", "+x", pkg_resources.resource_filename(__name__, self.binaries[binary])])
+                call(["chmod", "+x", pkg_resources.resource_filename(__name__, self._binaries[binary])])
 
     def create_asset_bundle(self, model_path: Union[Path, str], cleanup: bool, wnid: int = -1, wcategory: str = "", scale: float = 1) -> (List[Path], Path):
         """
@@ -109,10 +111,10 @@ class AssetBundleCreator(AssetBundleCreatorBase):
             if materials_directory.exists():
                 shutil.rmtree(str(materials_directory.resolve()))
 
-            if not self.quiet:
+            if not self._quiet:
                 print("Removed temporary files.")
 
-        if not self.quiet:
+        if not self._quiet:
             print("DONE!")
 
         return asset_bundle_paths, record_path
@@ -140,7 +142,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         :return The path to `<home>/asset_bundle_creator/Assets/`
         """
 
-        assets_directory = self.project_path.joinpath("Assets")
+        assets_directory = self._project_path.joinpath("Assets")
         assert assets_directory.exists(), f"Assets directory not found: {assets_directory.resolve()}"
 
         return assets_directory
@@ -154,14 +156,6 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         assert resources_directory.exists(), f"Resources directory not found: {resources_directory.resolve()}"
 
         return resources_directory
-
-    @staticmethod
-    def get_editor_path() -> Path:
-        """
-        :return The path to the Unity Editor executable.
-        """
-
-        return super().get_editor_path()
 
     def get_base_unity_call(self) -> List[str]:
         """
@@ -183,31 +177,32 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         if unity_project_path.exists():
             return unity_project_path
 
-        if not self.quiet:
+        if not self._quiet:
             print(f"Creating: {unity_project_path.resolve()}")
 
-        call([str(AssetBundleCreatorBase.get_editor_path().resolve()),
+        call([str(self._unity_editor_path.resolve()),
               "-createProject",
               str(unity_project_path.resolve()),
               "-quit",
-              "-batchmode"], env=self.env)
+              "-batchmode"], env=self._env)
         assert unity_project_path.exists(), unity_project_path.resolve()
-        if not self.quiet:
+        if not self._quiet:
             print(f"Created new Unity project: {str(unity_project_path.resolve())}")
         # Add the .unitypackage to the new project.
         package_name = "asset_bundle_creator.unitypackage"
         filepath = pkg_resources.resource_filename(__name__, package_name)
         assert Path(filepath).exists(), filepath
         # Import the package.
-        call([str(AssetBundleCreatorBase.get_editor_path().resolve()),
+        call([str(self._unity_editor_path.resolve()),
               "-projectPath",
               str(unity_project_path.resolve()),
               "-importPackage",
               filepath,
               "-quit",
-              "-batchmode"], env=self.env)
-        if not self.quiet:
+              "-batchmode"], env=self._env)
+        if not self._quiet:
             print(f"Imported {package_name} into the new project.")
+        return unity_project_path
 
     @staticmethod
     def get_project_path() -> Path:
@@ -228,17 +223,17 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         if model_path.suffix != ".fbx":
             assert model_path.suffix == ".obj"
-            if not self.quiet:
+            if not self._quiet:
                 print("Model is already a .obj file. Skipping the conversion to .obj")
             return model_path, False
 
-        if not self.quiet:
+        if not self._quiet:
             print("Converting a .fbx file to .obj")
 
         # Create the .obj file.
         obj_filename = model_path.stem + ".obj"
 
-        assimp = pkg_resources.resource_filename(__name__, self.binaries["assimp"])
+        assimp = pkg_resources.resource_filename(__name__, self._binaries["assimp"])
         assert Path(assimp).exists(), assimp
 
         # Run assimp to create the .obj file.
@@ -254,7 +249,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         mtl_path = Path(obj_filename + ".mtl")
         if mtl_path.exists():
             mtl_path.unlink()
-            if not self.quiet:
+            if not self._quiet:
                 print("Removed superfluous .obj.mtl file")
 
         return obj_path, True
@@ -277,11 +272,11 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         assert Path(obj_path).exists(), f"Target .obj doesn't exist: {obj_path}"
 
         wrl_filename = model_path.stem + ".wrl"
-        if not self.quiet:
+        if not self._quiet:
             print("Running V-HACD on a .obj file (this might take awhile).")
 
         # Run V-HACD.
-        vhacd = pkg_resources.resource_filename(__name__, self.binaries["vhacd"])
+        vhacd = pkg_resources.resource_filename(__name__, self._binaries["vhacd"])
 
         assert Path(vhacd).exists(), vhacd
         call([vhacd,
@@ -294,21 +289,21 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                                             "Check your original file to make sure that is 3D " \
                                             "(not just a flat plane) and isn't corrupted."
 
-        if not self.quiet:
+        if not self._quiet:
             print(f"Created: {wrl_filename}")
 
         # Remove the log, if any.
         if Path("log.txt").exists():
             os.remove("log.txt")
 
-            if not self.quiet:
+            if not self._quiet:
                 print("Removed V-HACD log file.")
 
         # Remove the superfluous .obj file.
         if model_path.suffix != ".obj":
             os.remove(obj_path)
 
-            if not self.quiet:
+            if not self._quiet:
                 print(f"Removed superfluous .obj file: {obj_path}")
 
         return Path(wrl_filename)
@@ -325,11 +320,11 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         assert wrl_filename.exists(), f"Missing .wrl file: {wrl_filename}"
 
-        if not self.quiet:
+        if not self._quiet:
             print("Converting .wrl to .obj")
 
         # Run meshconv.
-        meshconv = pkg_resources.resource_filename(__name__, self.binaries["meshconv"])
+        meshconv = pkg_resources.resource_filename(__name__, self._binaries["meshconv"])
         assert Path(meshconv).exists(), meshconv
         call([meshconv,
               str(wrl_filename.resolve()),
@@ -343,7 +338,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         obj_path = Path(f"{model_name}_colliders.obj")
         assert obj_path.exists(), "Failed to create .obj file from .wrl file."
 
-        if not self.quiet:
+        if not self._quiet:
             print(f"Created {obj_path.resolve()} from .wrl file.")
 
         return obj_path
@@ -364,7 +359,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         resources_directory = self.get_resources_directory()
 
-        if not self.quiet:
+        if not self._quiet:
             print("Copying files into the Unity project.")
 
         mtl = model_path.parent.joinpath(Path(model_path.stem + ".mtl"))
@@ -397,7 +392,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
             else:
                 distutils.dir_util.copy_tree(str(src.resolve()), str(dest.resolve()))
             dests.append(dest)
-        if not self.quiet:
+        if not self._quiet:
             print("Copied files into the Unity project.")
         return dests
 
@@ -415,13 +410,13 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         report = self.get_assets_directory().joinpath("report.txt")
         if report.exists():
             os.remove(str(report.resolve()))
-            if not self.quiet:
+            if not self._quiet:
                 print("Removed old report.")
 
         # Create the prefab.
-        if not self.quiet:
+        if not self._quiet:
             print("Creating the prefab...")
-        prefab_call = self.unity_call[:]
+        prefab_call = self._unity_call[:]
         prefab_call.extend(["-executeMethod",
                             "AssetBundleCreator.CreatePrefab",
                             "-filename=" + model_name,
@@ -429,7 +424,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                             "-extension=" + model_extension,
                             "-colliders=" + colliders
                             ])
-        call(prefab_call, env=self.env)
+        call(prefab_call, env=self._env)
         prefab_path = self.get_resources_directory().joinpath(f"prefab/{model_name}.prefab")
         assert prefab_path.exists(), "Failed to create prefab."
 
@@ -437,7 +432,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         if report.exists():
             raise Exception(f"Created the prefab with errors: {report.read_text()}")
 
-        if not self.quiet:
+        if not self._quiet:
             print("Created the prefab.")
 
         return prefab_path, report
@@ -458,9 +453,9 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         assert prefab_path.exists(), f"Missing prefab: {prefab_path.resolve()}"
 
-        if not self.quiet:
+        if not self._quiet:
             print("Creating local asset bundles")
-        asset_bundle_call = self.unity_call[:]
+        asset_bundle_call = self._unity_call[:]
         platforms_call = ""
         for p in platforms:
             platforms_call += p + ","
@@ -470,7 +465,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                                   "-modelname=" + model_name,
                                   "-platforms=" + platforms_call
                                   ])
-        call(asset_bundle_call, env=self.env)
+        call(asset_bundle_call, env=self._env)
         new_asset_bundles_directory = self.get_assets_directory().joinpath("NewAssetBundles")
         new_asset_bundles_directory = new_asset_bundles_directory.joinpath(model_name)
         assert new_asset_bundles_directory.exists(), f"No asset bundles found: {new_asset_bundles_directory.resolve()}"
@@ -484,7 +479,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
             assert bundle_path.exists(), f"Missing asset bundle: {asset_bundle_platform}"
             paths.append(bundle_path)
 
-        if not self.quiet:
+        if not self._quiet:
             print("Created local asset bundles.")
 
         return paths
@@ -516,7 +511,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         """
 
         # Write the record.
-        if not self.quiet:
+        if not self._quiet:
             print("Creating a record.")
 
         if record is None:
@@ -546,7 +541,8 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                        "do_not_use_reason": record.do_not_use_reason,
                        "canonical_rotation": record.canonical_rotation,
                        "physics_quality": -1,
-                       "asset_bundle_sizes": record.asset_bundle_sizes}
+                       "asset_bundle_sizes": record.asset_bundle_sizes,
+                       "container_colliders": []}
 
         # Serialize the record.
         record_data = json.dumps(record_data)
@@ -556,12 +552,12 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         record_path = self.get_assets_directory().joinpath(model_name + ".json")
         record_path.write_text(record_data, encoding="utf-8")
 
-        record_call = self.unity_call[:]
+        record_call = self._unity_call[:]
         record_call.extend(["-executeMethod",
                             "RecordCreator.WriteRecord",
                             "-modelname=" + model_name,
                             "-scale=" + str(scale)])
-        call(record_call, env=self.env)
+        call(record_call, env=self._env)
 
         # Test the record.
         try:
@@ -569,12 +565,12 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         except json.JSONDecodeError:
             raise Exception("Failed to deserialize: " + record_path.read_text(encoding="utf-8"))
 
-        if not self.quiet:
+        if not self._quiet:
             print("Wrote the record data to the disk.")
 
         if write_physics:
             self.write_physics_quality(record_path=record_path,
-                                       asset_bundle_path=self.get_local_asset_bundle_path(model_name))
+                                       asset_bundle_path=self.get_local_asset_bundle_path(model_name).resolve())
 
         return record_path
 
@@ -609,13 +605,22 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         :param asset_bundle_path: The URL to the local asset bundle.
         """
 
-        # Get the path to the writer controller.
-        writer_path = pkg_resources.resource_filename(__name__, "model_pipeline/write_physics_quality.py")
-        writer_call = ["py", "-3", writer_path,
-                       "--record_path", str(record_path.resolve()),
-                       "--asset_bundle_path", str(asset_bundle_path.resolve())]
-
-        call(writer_call)
+        c = Controller()
+        v = ModelVerifier()
+        r: ModelRecord = ModelRecord(json.loads(Path(record_path).read_text(encoding="utf-8")))
+        original_url = r.urls[platform.system()]
+        r.urls[platform.system()] = f"file:///{str(asset_bundle_path)}"
+        v.set_tests(name=r.name, source=r, model_report=False, missing_materials=False, physics_quality=True)
+        c.add_ons.append(v)
+        c.communicate([])
+        while not v.done:
+            c.communicate([])
+        c.communicate({"$type": "terminate"})
+        c.socket.close()
+        # Write the physics quality.
+        r.physics_quality = float(v.reports[0])
+        r.urls[platform.system()] = original_url
+        record_path.write_text(json.dumps(r.__dict__), encoding="utf-8")
 
     def validate(self, record_path: Path, asset_bundle_path: Path) -> Tuple[bool, str]:
         """
@@ -627,22 +632,26 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         :return True if there aren't problems, and a string output report.
         """
 
-        if not self.quiet:
+        if not self._quiet:
             print("Validating asset bundle...")
 
-        validator_path = pkg_resources.resource_filename(__name__, "model_pipeline/validator.py")
-        validator_call = ["py", "-3", validator_path,
-                          "--record_path", str(record_path.resolve()),
-                          "--asset_bundle_path", str(asset_bundle_path.resolve())]
-        call(validator_call)
-
-        report = json.loads(paths.VALIDATOR_REPORT_PATH.read_text(encoding="utf-8"))
-        if not report["ok"]:
+        c = Controller()
+        v = ModelVerifier()
+        r: ModelRecord = ModelRecord(json.loads(Path(record_path).read_text(encoding="utf-8")))
+        r.urls[platform.system()] = f"file:///{str(asset_bundle_path)}"
+        v.set_tests(name=r.name, source=r, model_report=True, missing_materials=True, physics_quality=False)
+        c.add_ons.append(v)
+        c.communicate([])
+        while not v.done:
+            c.communicate([])
+        c.communicate({"$type": "terminate"})
+        c.socket.close()
+        if len(v.reports) != 0:
             output = "There are problems with the asset bundle!"
-            for problem in report["reports"]:
+            for problem in v.reports:
                 output += "\n\t" + problem
             return False, output
-        if not self.quiet:
+        if not self._quiet:
             print("OK!")
         return True, ""
 
@@ -680,7 +689,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                 wrl_path.unlink()
 
         # Create the asset bundles.
-        record_call = self.unity_call[:]
+        record_call = self._unity_call[:]
         record_call.extend(["-executeMethod",
                             "AssetBundleCreator.CreateManyAssetBundles",
                             "-library=" + library_path,
@@ -688,18 +697,26 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         call(record_call)
 
         if cleanup:
-            root_dir = self.get_assets_directory()
-            # Remove assets used to create asset bundles.
-            for ext in [".obj", ".fbx", ".mtl", ".mat", ".jpg", ".prefab"]:
-                for f in root_dir.rglob(f"*{ext}"):
-                    f.unlink()
-            # Remove asset bundle junk.
-            distutils.dir_util.remove_tree(str(self.get_assets_directory().joinpath("NewAssetBundles").resolve()))
-            # Remove models junk.
-            for d in models_dir.iterdir():
-                if "placeholder" in d.stem:
-                    continue
-                if d.is_file():
-                    d.unlink()
-                else:
-                    distutils.dir_util.remove_tree(str(d.resolve()))
+            self.cleanup()
+
+    def cleanup(self) -> None:
+        """
+        Delete all files from `~/asset_bundle_creator` with these extensions: .obj, .fbx, .mtl, .mat, .jpg, .prefab
+        """
+
+        root_dir = self.get_assets_directory()
+        # Remove assets used to create asset bundles.
+        for ext in [".obj", ".fbx", ".mtl", ".mat", ".jpg", ".prefab"]:
+            for f in root_dir.rglob(f"*{ext}"):
+                f.unlink()
+        # Remove asset bundle junk.
+        distutils.dir_util.remove_tree(str(self.get_assets_directory().joinpath("NewAssetBundles").resolve()))
+        # Remove models junk.
+        models_dir = self.get_resources_directory().joinpath("models")
+        for d in models_dir.iterdir():
+            if "placeholder" in d.stem:
+                continue
+            if d.is_file():
+                d.unlink()
+            else:
+                distutils.dir_util.remove_tree(str(d.resolve()))
