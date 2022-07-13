@@ -51,11 +51,11 @@ class BinaryManager:
         :param message: The message dict from controller with binary start request.
         :param args: The args defined upon initializing this script defining binary.
         """
-        controller_address = message["controller_address"]
+        # controller_address = message["controller_address"]
         build_port = self._find_free_port()
         # gpu_id = next(args.gpus)
         # os.environ["DISPLAY"] = ":0" + str(gpu_id)
-        os.environ["DISPLAY"] = ":0"
+        os.environ["DISPLAY"] = ":1"
         build_args = self._format_args_unity(
             {
                 "port": build_port,
@@ -100,6 +100,7 @@ class BinaryManager:
             build_port = message["build_port"]
             pid = build_index[build_port]["build_pid"]
             os.kill(pid, signal.SIGKILL)
+            os.waitpid(pid, 0)
             socket.send_json({"type": "build_killed", "build_pid": pid})
             print("Killing build with pid: {} on port: {}".format(pid,
                                                                   build_port))
@@ -125,6 +126,7 @@ class BinaryManager:
                     build_pid = build_info["build_pid"]
                     build_port = build_info["build_port"]
                     os.kill(build_pid, signal.SIGKILL)
+                    os.waitpid(build_pid, 0)
                     print("Killing build with pid: {} on port: {}".format(build_pid,
                                                                           build_port))
 
@@ -171,7 +173,7 @@ def _get_binary_manager_args():
     # Build path
     parser.add_argument(
         "--build_path",
-        default='bash /home/samarth/synthetic/tdw/Docker/my_start_container.sh',
+        default='/home/samarth/synthetic/tdw_builds/TDW/TDW.x86_64',
         help="The path to the build",
     )
     # OpenGL version

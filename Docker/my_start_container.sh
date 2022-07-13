@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=$(python tdw_version.py)
+# VERSION=$(python tdw_version.py)
 
 # Allow x server to accept local connections
 xhost +local:root
