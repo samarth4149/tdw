@@ -53,8 +53,9 @@ class BinaryManager:
         """
         controller_address = message["controller_address"]
         build_port = self._find_free_port()
-        gpu_id = next(args.gpus)
-        os.environ["DISPLAY"] = ":0." + str(gpu_id)
+        # gpu_id = next(args.gpus)
+        # os.environ["DISPLAY"] = ":0" + str(gpu_id)
+        os.environ["DISPLAY"] = ":0"
         build_args = self._format_args_unity(
             {
                 "port": build_port,
@@ -196,7 +197,7 @@ def _get_binary_manager_args():
     args = parser.parse_args()
 
     assert args.build_path is not None
-    args.gpus = itertools.cycle(args.gpus.split(","))
+    # args.gpus = itertools.cycle(args.gpus.split(","))
 
     return args
 
