@@ -7,7 +7,7 @@ xhost +local:root
 
 # Run the container
 docker run -it \
-  --gpus '"device=0"' \
+  --gpus all \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /data/samarth:/data/samarth \
   -e DISPLAY=$DISPLAY \

@@ -57,11 +57,7 @@ class BinaryManager:
         os.environ["DISPLAY"] = ":0." + str(gpu_id)
         build_args = self._format_args_unity(
             {
-                "screenHeight": str(args.screen_height),
-                "screenWidth": str(args.screen_width),
-                "address": controller_address,
                 "port": build_port,
-                "gpuDevice": gpu_id,
             }
         )
         if args.force_glcore42:
@@ -174,7 +170,7 @@ def _get_binary_manager_args():
     # Build path
     parser.add_argument(
         "--build_path",
-        default=os.environ.get("TDW_BUILD_PATH"),
+        default='bash /home/samarth/synthetic/tdw/Docker/my_start_container.sh',
         help="The path to the build",
     )
     # OpenGL version
