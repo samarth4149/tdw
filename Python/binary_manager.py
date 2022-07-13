@@ -180,18 +180,18 @@ def _get_binary_manager_args():
         default=False,
         help="Use OpenGL 4.2 instead of latest system version",
     )
-    # Build screen width
-    parser.add_argument(
-        "--screen_width", default=256, type=int, help="Screen width in pixels"
-    )
-    # Build screen height
-    parser.add_argument(
-        "--screen_height", default=256, type=int, help="Screen height in pixels"
-    )
-    # Render GPUs
-    parser.add_argument(
-        "--gpus", default="0", type=str, help="GPUs to be used for rendering"
-    )
+    # # Build screen width
+    # parser.add_argument(
+    #     "--screen_width", default=256, type=int, help="Screen width in pixels"
+    # )
+    # # Build screen height
+    # parser.add_argument(
+    #     "--screen_height", default=256, type=int, help="Screen height in pixels"
+    # )
+    # # Render GPUs
+    # parser.add_argument(
+    #     "--gpus", default="0", type=str, help="GPUs to be used for rendering"
+    # )
     # Parse the arguments.
     args = parser.parse_args()
 
