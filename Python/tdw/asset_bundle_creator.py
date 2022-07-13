@@ -60,7 +60,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
             else:
                 call(["chmod", "+x", pkg_resources.resource_filename(__name__, self._binaries[binary])])
 
-    def create_asset_bundle(self, model_path: Union[Path, str], cleanup: bool, wnid: int = -1, wcategory: str = "", scale: float = 1) -> (List[Path], Path):
+    def create_asset_bundle(self, model_path: Union[Path, str], cleanup: bool, wnid: int = -1, wcategory: str = "", scale: float = 1, vhacd_resolution = 100000) -> (List[Path], Path):
         """
         Create an asset bundle for each operating system. Typically, this is the only function you'll want to use.
         This function calls in sequence: `fbx_to_obj()`, `obj_to_wrl()`, `wrl_to_obj()`, `move_files_to_unity_project()`, `create_prefab()`, `prefab_to_asset_bundle()`, and `create_record()`.
@@ -70,6 +70,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         :param wnid: The WordNet ID.
         :param wcategory: The WordNet category.
         :param scale: The scale of the object.
+        :param vhacd_resolution: Resolution parameter for VHACD.
 
         :return The paths to each asset bundle as Path objects (from pathlib) and the path to the metadata record file as a Path object (from pathlib).
         """
@@ -80,7 +81,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         # Create the asset bundles.
         obj_path, is_new = self.fbx_to_obj(model_path)
-        wrl_path = self.obj_to_wrl(model_path)
+        wrl_path = self.obj_to_wrl(model_path, vhacd_resolution=vhacd_resolution)
         obj_colliders_path = self.wrl_to_obj(wrl_path, model_name)
         copied_file_paths = self.move_files_to_unity_project(obj_colliders_path, model_path)
         prefab_path, report_path = self.create_prefab(f"{model_name}_colliders.obj", model_name, model_path.suffix)
@@ -254,7 +255,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
 
         return obj_path, True
 
-    def obj_to_wrl(self, model_path: Path, vhacd_resolution: int = 8000000) -> Path:
+    def obj_to_wrl(self, model_path: Path, vhacd_resolution: int = 100000) -> Path:
         """
         Convert a .obj file to a .wrl file with testVHACD
 
