@@ -1,8 +1,10 @@
 FROM nvidia/opengl:1.1-glvnd-devel-ubuntu18.04
+MAINTAINER Abhishek Bhandwaldar, abhi.b@ibm.com
 
-ARG TDW_VERSION
+ARG TDW_VERSION=1.10.0
 ARG DEBIAN_FRONTEND=noninteractive
 ENV NVIDIA_DRIVER_CAPABILITIES ${NVIDIA_DRIVER_CAPABILITIES},display
+ENV AWS_REGION=us-east-1
 
 RUN apt-get -qq update && apt-get -qq install -y sudo curl
 
@@ -17,11 +19,15 @@ RUN apt-get -qq update && apt-get -qq install -y  sudo libgdk-pixbuf2.0-0 libgl1
 
 RUN apt-get -qq update && apt-get -qq install -y sudo libxfixes3 libxi6 libxrandr2 libxrender1 libxtst6 zlib1g debconf npm xdg-utils lsb-release libpq5 xvfb x11-apps  && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y gdb
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
     unzip
 
-
-RUN wget https://github.com/threedworld-mit/tdw/releases/download/v${TDW_VERSION}/TDW_Linux.tar.gz
-RUN tar -xzf TDW_Linux.tar.gz
+WORKDIR /
+RUN wget -O TDW_build.tar.gz https://github.com/threedworld-mit/tdw/releases/download/v${TDW_VERSION}/TDW_Linux.tar.gz
+# RUN wget -O TDW_build.tar.gz https://www.dropbox.com/s/9qrvyab5ihfq5ib/TDW_Linux_occlusion_lighting_frame.tar.gz?dl=0 
+RUN tar -xzf TDW_build.tar.gz
+ADD aws_setup /root/
