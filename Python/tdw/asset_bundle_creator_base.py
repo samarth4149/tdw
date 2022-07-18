@@ -15,7 +15,7 @@ class AssetBundleCreatorBase(ABC):
     """:class_var
     Use this version of Unity Editor to launch the asset bundle creator.
     """
-    UNITY_VERSION: str = "2020.3"
+    UNITY_VERSION: str = "2020.3.24f1"
 
     def __init__(self, quiet: bool = False, display: str = ":0", unity_editor_path: Union[Path, str] = None):
         """
@@ -85,17 +85,18 @@ class AssetBundleCreatorBase(ABC):
         assert editor_path.exists(), f"Unity Hub not found: {editor_path}"
 
         # Get the expected Unity version.
-        ds = []
-        re_pattern = AssetBundleCreatorBase.UNITY_VERSION + ".(.*)"
-        for d in editor_path.iterdir():
-            if AssetBundleCreatorBase.UNITY_VERSION not in d.stem:
-                continue
-            re_search = re.search(re_pattern, str(d.resolve()))
-            if re_search is None:
-                continue
-            ds.append(d)
-        ds = sorted(ds, key=lambda version: int(re.search(re_pattern, str(version.resolve())).group(1), 16))
-        editor_version = ds[-1]
+        # ds = []
+        # re_pattern = AssetBundleCreatorBase.UNITY_VERSION + "(.*)"
+        # for d in editor_path.iterdir():
+        #     if AssetBundleCreatorBase.UNITY_VERSION not in d.stem:
+        #         continue
+        #     re_search = re.search(re_pattern, str(d.resolve()))
+        #     if re_search is None:
+        #         continue
+        #     ds.append(d)
+        # ds = sorted(ds, key=lambda version: int(re.search(re_pattern, str(version.resolve())).group(1), 16))
+        # editor_version = ds[-1]
+        editor_version = AssetBundleCreatorBase.UNITY_VERSION
         editor_path = editor_path.joinpath(editor_version)
 
         if system == "Windows":
