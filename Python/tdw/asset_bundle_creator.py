@@ -695,7 +695,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                             "AssetBundleCreator.CreateManyAssetBundles",
                             "-library=" + library_path,
                             "-internal_materials"])
-        call(record_call)
+        call(record_call, env=self._env)
 
         if cleanup:
             self.cleanup()
