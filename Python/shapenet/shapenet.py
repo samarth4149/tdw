@@ -88,7 +88,7 @@ class _ShapeNet:
         :param first_batch_only: If true, output only the first batch. Useful for testing purposes.
         """
 
-        records = ModelLibrarian(library=str(self.library_path.resolve())).records
+        records = ModelLibrarian(library=str(self.library_path.resolve())).records[1150:]
         a = AssetBundleCreator(quiet=True)
 
         pbar = tqdm(total=len(records))
@@ -112,7 +112,12 @@ class _ShapeNet:
                 if dest_path.exists():
                     continue
                 # Process the .obj
-                obj_path = self._get_obj(record)
+                try:
+                    obj_path = self._get_obj(record)
+                except Exception:
+                    with open('missing_files.txt', 'a+') as f:
+                        f.write(f'{record.name}\n')
+                    continue
                 # Move the files and remove junk.
                 a.move_files_to_unity_project(None, model_path=obj_path, sub_directory=f"models/{record.name}")
             # Creating the asset bundles.
