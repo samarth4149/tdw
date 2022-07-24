@@ -88,7 +88,7 @@ class _ShapeNet:
         :param first_batch_only: If true, output only the first batch. Useful for testing purposes.
         """
 
-        records = ModelLibrarian(library=str(self.library_path.resolve())).records[1150:]
+        records = ModelLibrarian(library=str(self.library_path.resolve())).records[5250:]
         a = AssetBundleCreator(quiet=True)
 
         pbar = tqdm(total=len(records))

@@ -376,8 +376,11 @@ class AssetBundleCreator(AssetBundleCreatorBase):
             for mtl_line in mtl_txt.split("\n"):
                 if ".jpg" in mtl_line:
                     tex_path = model_path.parent.joinpath(mtl_line.split(" ")[1])
-                    assert tex_path.exists(), f"Missing texture: {tex_path}"
-                    sources.append(tex_path)
+                    if tex_path.exists():
+                        sources.append(tex_path)
+                    else:
+                        with open('missing_textures.txt', 'w') as f:
+                            f.write(f"{tex_path}\n")
         for src in sources:
             if src is None or not src.exists():
                 continue
