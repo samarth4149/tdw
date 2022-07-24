@@ -379,7 +379,7 @@ class AssetBundleCreator(AssetBundleCreatorBase):
                     if tex_path.exists():
                         sources.append(tex_path)
                     else:
-                        with open('missing_textures.txt', 'w') as f:
+                        with open('missing_textures.txt', 'a+') as f:
                             f.write(f"{tex_path}\n")
         for src in sources:
             if src is None or not src.exists():
@@ -674,23 +674,27 @@ class AssetBundleCreator(AssetBundleCreatorBase):
         models_dir = self.get_resources_directory().joinpath("models")
         for ext in [".obj", ".fbx"]:
             for f in models_dir.rglob(f"*{ext}"):
-                if f.stem.endswith("_colliders"):
-                    continue
-                colliders_path = f.parent.joinpath(f"{f.stem}_colliders.obj")
-                # Don't regenerate a colliders file if one already exists.
-                if colliders_path.exists():
-                    continue
-                # Don't recreate models that already have prefabs.
-                prefab_path = self.get_resources_directory().joinpath(f"prefab/{f.stem}.prefab")
-                if prefab_path.exists():
-                    continue
-                # Create the colliders.
-                wrl_path = self.obj_to_wrl(f, vhacd_resolution=vhacd_resolution)
-                # Move the collider .obj to the correct directory.
-                wrl_to_obj_path = self.wrl_to_obj(wrl_path, f.stem)
-                distutils.file_util.move_file(str(wrl_to_obj_path.resolve()), str(colliders_path.resolve()))
-                # Remove the .wrl file.
-                wrl_path.unlink()
+                try:
+                    if f.stem.endswith("_colliders"):
+                        continue
+                    colliders_path = f.parent.joinpath(f"{f.stem}_colliders.obj")
+                    # Don't regenerate a colliders file if one already exists.
+                    if colliders_path.exists():
+                        continue
+                    # Don't recreate models that already have prefabs.
+                    prefab_path = self.get_resources_directory().joinpath(f"prefab/{f.stem}.prefab")
+                    if prefab_path.exists():
+                        continue
+                    # Create the colliders.
+                    wrl_path = self.obj_to_wrl(f, vhacd_resolution=vhacd_resolution)
+                    # Move the collider .obj to the correct directory.
+                    wrl_to_obj_path = self.wrl_to_obj(wrl_path, f.stem)
+                    distutils.file_util.move_file(str(wrl_to_obj_path.resolve()), str(colliders_path.resolve()))
+                    # Remove the .wrl file.
+                    wrl_path.unlink()
+                except Exception as e:
+                    with open('other_errors.txt', 'a+') as fout:
+                        fout.write(f"{f}:<error>:{e}\n")
 
         # Create the asset bundles.
         record_call = self._unity_call[:]
