@@ -55,7 +55,7 @@ class BinaryManager:
         build_port = self._find_free_port()
         # gpu_id = next(args.gpus)
         # os.environ["DISPLAY"] = ":0" + str(gpu_id)
-        os.environ["DISPLAY"] = ":1"
+        os.environ["DISPLAY"] = f":{args.display_idx}"
         build_args = self._format_args_unity(
             {
                 "port": build_port,
@@ -164,6 +164,12 @@ def _get_binary_manager_args():
     Returns parsed args.
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--display_idx",
+        default=1,
+        type=int,
+        help="Index of the display"
+    )
     parser.add_argument(
         "--listening_port",
         default="5556",
