@@ -6,6 +6,7 @@ from tdw.librarian import HDRISkyboxLibrarian
 from pathlib import Path
 import imageio
 import os
+from tqdm import tqdm
 
 """
 Add an HDRI skybox to the scene and rotate it.
@@ -38,7 +39,7 @@ if __name__ == '__main__':
                         "strength": 1.0}
                    ])
 
-    for skybox in skyboxes:
+    for skybox in tqdm(skyboxes):
         path = Path(f'~/tmp/tdw_backgrounds/{skybox.name}').expanduser()
         os.makedirs(path, exist_ok=True)
         capture = ImageCapture(avatar_ids=["a"], path=path)
@@ -54,6 +55,6 @@ if __name__ == '__main__':
         images = []
         for i in range(24):
             images.append(imageio.imread(path/f'img_{i}.jpg'))
-        imageio.mimsave(path/'background.gif', images, duration=0.1)
+        imageio.mimsave(path.parent/f'{skybox.name}.gif', images, duration=0.1)
             
     c.communicate({"$type": "terminate"})
