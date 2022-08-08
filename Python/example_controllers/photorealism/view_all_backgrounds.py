@@ -54,7 +54,7 @@ if __name__ == '__main__':
                             "angle": 15}])
         images = []
         for i in range(24):
-            images.append(imageio.imread(path/f'img_{i}.jpg'))
+            images.append(imageio.imread(path/ 'a' / f'img_{i:04d}.jpg'))
         imageio.mimsave(path.parent/f'{skybox.name}.gif', images, duration=0.1)
             
     c.communicate({"$type": "terminate"})
